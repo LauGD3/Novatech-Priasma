@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model TipoUsuario {
+  idTipoUsuario Int @id @default(autoincrement())
+  tipoUsuario String @db.VarChar(20)
+
+  user Usuario[]
+}
+
+model TipoDocumento {
+  idTipoDocumento Int @id @default(autoincrement())
+  tipoDoc String @db.VarChar(30)
+  // Relations
+  persona Persona[]
+}
+
+model TipoServicio {
+  idTipoServicio Int @id @default(autoincrement())
+  tipoServicio String @db.VarChar(45)
+  // Relations
+  servicios Servicio[]
+}
+
+model Persona {
+  idPersona Int @id @default(autoincrement())
+  pNombre String @db.VarChar(20)
+  sNombre String? @db.VarChar(20)
+  pApellido String @db.VarChar(20)
+  sApellido String? @db.VarChar(20)
+  documento String @db.VarChar(20)
+  // FK
+  tipoDocumento Int
+  tipoDocRel TipoDocumento @relation(fields: [tipoDocumento], references: [idTipoDocumento])
+  // Relations
+  user Usuario?
+  equipos Equipo[]
+  servicio Servicio[]
+  facturas Factura[]
+}
+
+model Usuario{ 
+  idUsuario Int @id @unique
+  idUs Persona @relation(fields: [idUsuario], references: [idPersona])
+  correo String @db.VarChar(200)
+  clave String @db.VarChar(500)
+  // FK
+  tipoUsuario Int 
+  tipoUs TipoUsuario @relation(fields: [tipoUsuario], references: [idTipoUsuario])
+}
+
+model Equipo {
+  idEquipo Int @id @default(autoincrement())
+  descripProblema String @db.VarChar(500)
+  // FK
+  propietario Int
+  prop Persona @relation(fields: [propietario], references: [idPersona])
+  // Relations
+  servicios Servicio[]
+}
+
+model Servicio {
+  idServicio Int @id @default(autoincrement())
+  decripcion String @db.VarChar(500)
+  // FK
+  equipoAreparar Int
+  equipoid Equipo @relation(fields: [equipoAreparar], references: [idEquipo])
+  
+  tipoServicio Int 
+  tipoServid TipoServicio @relation(fields: [tipoServicio], references: [idTipoServicio])
+
+  tecnicoEncargado Int
+  tecnicoEncarId Persona @relation(fields: [tecnicoEncargado], references: [idPersona])
+  // Relations
+  detalleFac DetalleFactura[]
+}
+
+enum Estado {
+  enProceso
+  terminado
+}
+
+model DetalleFactura {
+  idDetalleFactura Int @id @default(autoincrement())
+  costoServicio Float
+  // FK
+  servicio Int
+  serId Servicio @relation(fields: [servicio], references: [idServicio])
+  // Relations
+  facturas Factura[]
+}
+
+model Factura {
+  idFactura Int @id @default(autoincrement())
+  fecha DateTime
+  costo Float
+  estado Estado
+  // FK
+  cliente Int
+  cliId Persona @relation(fields: [cliente], references: [idPersona])
+  
+  detalleFactura Int
+  detalleFacId DetalleFactura @relation(fields: [detalleFactura], references: [idDetalleFactura ])
+}
